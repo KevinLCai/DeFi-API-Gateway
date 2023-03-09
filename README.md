@@ -5,4 +5,4 @@ Aims: This repo aims to provide endpoints through REST endpoints. It will be abl
 Technologies: Javascript - Node.js, Express.js, SQL, PostgreSQL
 
 To Run:
-node app.js
+flask run
