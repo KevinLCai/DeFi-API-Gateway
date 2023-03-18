@@ -13,25 +13,21 @@ def hello_world():
 
 @app.route('/data', methods=['POST'])
 def get_data():
-    return jsonify({'message': 'Hello from Flask!'})
+    data = request.get_json()
+    name = data['data']
+    message = f"Hello, {name}!"
+    return jsonify({'message': message})
 
 
-# @app.route('/pnl', methods=['POST'])
-# def pnl():
-#     name = request.json.get('name', '')
-#     message = f"{name}"
-#     return jsonify({'message': message})
-
-
-@app.route('/candlestick')
-def get_candlestick_data():
-    # Load candlestick data from a CSV file or database
-    # For example:
-    df = pd.read_csv('daily_BTC.csv')
-
-    # Convert the data to a list of dictionaries
-    data = df.to_dict(orient='records')
-
+@app.route('/chart', methods=['POST'])
+def chart():
+    data = [
+        {'time': '2022-01-01', 'value': 100},
+        {'time': '2022-01-02', 'value': 110},
+        {'time': '2022-01-03', 'value': 105},
+        {'time': '2022-01-04', 'value': 115},
+        {'time': '2022-01-05', 'value': 120},
+    ]
     return jsonify(data)
 
 if __name__ == '__main__':
