@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+cors = CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5000"}})
 
 
 @app.route('/')
@@ -33,3 +33,6 @@ def get_candlestick_data():
     data = df.to_dict(orient='records')
 
     return jsonify(data)
+
+if __name__ == '__main__':
+    app.run(debug=True)
