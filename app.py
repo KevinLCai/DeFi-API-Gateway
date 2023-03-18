@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5000"}})
+cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 
 @app.route('/')
@@ -11,7 +11,7 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route('/data', methods=['GET'])
+@app.route('/data', methods=['POST'])
 def get_data():
     return jsonify({'message': 'Hello from Flask!'})
 
