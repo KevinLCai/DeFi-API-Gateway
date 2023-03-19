@@ -48,11 +48,9 @@ def add_token():
         host='localhost',
         database='defi_trading'
     )
-
-    if db:
-        logging.info("MySQL Database Initialised")
-    else:
-        logging.error("MySQL Database Failed to Load")
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
 
     result = db.insert_token(token_id, token_name, token_type)
     db.close()
@@ -68,21 +66,16 @@ def get_token():
     token_id = request.args.get('token_id')
 
     pw = input("Password: ")
-    try:
-        db = Database(
-            user='root',
-            password=pw,
-            host='localhost',
-            database='defi_trading'
-        )
-    except:
-        logging.error("Failed to connect to database")
-        return
 
-    if db:
-        logging.info("MySQL Database Initialised")
-    else:
-        logging.error("MySQL Database Failed to Load")
+    db = Database(
+        user='root',
+        password=pw,
+        host='localhost',
+        database='defi_trading'
+    )
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
 
     result = db.get_token_by_id(token_id)
     db.close()

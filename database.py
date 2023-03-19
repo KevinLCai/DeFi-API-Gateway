@@ -1,5 +1,6 @@
 import mysql.connector
 import logging
+from flask import jsonify
 
 class Database:
     def __init__(self, user, password, host, database):
@@ -7,12 +8,24 @@ class Database:
         self.password = password
         self.host = host
         self.database = database
-        self.connection = mysql.connector.connect(
-            user=self.user,
-            password=self.password,
-            host=self.host,
-            database=self.database
-        )
+        try:
+            self.connection = mysql.connector.connect(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database
+            )
+            self.valid = True
+        except:
+            logging.error("Invalid Database Credentials")
+            self.valid = False
+
+    def is_not_valid(self):
+        if not self.valid:
+            logging.error("INVALID CREDENTIALS")
+            return {'status': 'error', 'message': 'Invalid DB Credentials'}
+        else:
+            return False
 
     def insert_token(self, token_id, token_name, token_type):
         cursor = self.connection.cursor()
