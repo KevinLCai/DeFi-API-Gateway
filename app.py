@@ -12,40 +12,6 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route('/data', methods=['POST'])
-def get_data():
-    data = request.get_json()
-    name = data['data']
-    message = f"Hello, {name}!"
-    return jsonify({'message': message})
-
-
-# @app.route('/chart', methods=['POST'])
-# def chart():
-#     data = []
-
-#     df = pd.read_csv('daily_BTC.csv')
-#     first_row = df.iloc[0]
-
-#     counter = 0
-#     for index, row in df.iterrows():
-#         new_row = {
-#             'time': row['Date'],
-#             'value': row['Open']
-#         }
-#         # print(new_row)
-#         if counter<4:
-#             print(new_row)
-#             data.append(new_row)
-#             counter += 1
-
-
-#     data.append({'time': '2022-01-05', 'value': 120},)
-
-#     return jsonify(data)
-
-import csv
-
 def format_data(filename):
     data = []
     with open(filename, 'r') as f:
@@ -57,7 +23,6 @@ def format_data(filename):
             obj = {'time': date, 'value': int(close_price)}
             data.append(obj)
     return data
-
 
 @app.route('/chart', methods=['POST'])
 def chart():
