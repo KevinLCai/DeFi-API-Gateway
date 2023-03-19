@@ -27,30 +27,12 @@ def format_data(filename):
             data.append(obj)
     return data
 
+
 @app.route('/chart', methods=['POST'])
 def chart():
     data = format_data('daily_BTC.csv')
     return jsonify(data)
 
-
-# # @app.route('/add_token', methods=['POST'])
-# # def add_token():
-# pw = input("Password: ")
-# db = Database(
-#     user='root',
-#     password=pw,
-#     host='localhost',
-#     database='defi_trading'
-# )
-# if db:
-#     logging.info("MySQL Database Initialised")
-# else:
-#     logging.error("MySQL Database Failed to Load")
-
-
-# db.insert_token(21, 'Bitcoin', 'Crypto')
-
-# db.close()
 
 @app.route('/add_token', methods=['POST'])
 def add_token():
@@ -66,11 +48,9 @@ def add_token():
         host='localhost',
         database='defi_trading'
     )
-
-    if db:
-        logging.info("MySQL Database Initialised")
-    else:
-        logging.error("MySQL Database Failed to Load")
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
 
     result = db.insert_token(token_id, token_name, token_type)
     db.close()
@@ -79,6 +59,31 @@ def add_token():
         return jsonify({'status': 'success', 'message': 'Token added successfully'})
     else:
         return jsonify({'status': 'error', 'message': 'Failed to add token'})
+
+
+@app.route('/get_token', methods=['GET'])
+def get_token():
+    token_id = request.args.get('token_id')
+
+    pw = input("Password: ")
+
+    db = Database(
+        user='root',
+        password=pw,
+        host='localhost',
+        database='defi_trading'
+    )
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
+
+    result = db.get_token_by_id(token_id)
+    db.close()
+
+    if result:
+        return jsonify({'status': 'success', 'data': result})
+    else:
+        return jsonify({'status': 'error', 'message': 'Token not found'})
 
 
 if __name__ == '__main__':
