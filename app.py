@@ -27,6 +27,7 @@ def format_data(filename):
             data.append(obj)
     return data
 
+# Frontend Endpoints: 
 
 @app.route('/chart', methods=['POST'])
 def chart():
@@ -85,6 +86,22 @@ def get_token():
     else:
         return jsonify({'status': 'error', 'message': 'Token not found'})
 
+
+# CeFi Endpoints:
+
+@app.route("/cefi_historical", methods=["POST"])
+def cefi_historical():
+    data = request.get_json()
+    print(data)
+    # Code to parse and save the data
+    return "Data received and processed"
+
+@app.route("/cefi_deal", methods=["POST"])
+def cefi_deal():
+    data = request.get_json()
+    print(data)
+    # Code to parse and save the data
+    return "Data received and processed"
 
 if __name__ == '__main__':
     app.run(debug=True)
