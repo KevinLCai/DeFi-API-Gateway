@@ -96,10 +96,14 @@ def cefi_historical():
     # Code to parse and save the data
     return "Data received and processed"
 
-@app.route("/cefi_deal", methods=["POST"])
 def cefi_deal():
+    print("CEFI DEAL")
+
+@app.route("/deal", methods=["POST"])
+def deal():
     data = request.get_json()
-    print(data)
+    if data["strategy"] == "CeFi":
+        cefi_deal()
     # Code to parse and save the data
     return "Data received and processed"
 
