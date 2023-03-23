@@ -4,11 +4,14 @@ import pandas as pd
 import csv
 from database import Database
 import logging
-
+from flask_socketio import SocketIO, emit, send
+import json
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
-
+app.config['SECRET_KEY'] = 'secret!'
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*":{"origins":"*"}})
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins='*')
 
 @app.route('/')
 def hello_world():
@@ -96,16 +99,42 @@ def cefi_historical():
     # Code to parse and save the data
     return "Data received and processed"
 
-def cefi_deal():
-    print("CEFI DEAL")
+
+def format_trade_data(trade_data):
+    formatted_data = {}
+    formatted_data['timestamp'] = trade_data['timestamp']
+    formatted_data['price'] = trade_data['price']
+    formatted_data['size'] = trade_data['size']
+    formatted_data['direction'] = trade_data['direction'].lower()
+    return json.dumps(formatted_data)
+
+@socketio.on('cefi_deal', namespace='/cefi_deal')
+def cefi_deal(data):
+    data_to_send = format_trade_data(data)
+    print(data_to_send)
+    socketio.send(data_to_send, namespace='/cefi_deal')
+    # socketio.emit('cefi_deal', data_to_send)
+    print("EMITTED")
+ 
 
 @app.route("/deal", methods=["POST"])
 def deal():
     data = request.get_json()
-    if data["strategy"] == "CeFi":
-        cefi_deal()
+    strategy = data["strategy"]
+    del data["strategy"]
+    if strategy == "CeFi":
+        # cefi_deal(data)
+        data = {'message': 'Hello from Flask!'}
+        socketio.emit('data', data)
+        return jsonify(data)
+
+    elif strategy == "Flashloan":
+        pass
+    elif strategy == "YieldFarm":
+        pass
+
     # Code to parse and save the data
     return "Data received and processed"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
