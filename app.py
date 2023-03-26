@@ -118,13 +118,31 @@ def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, or
     else:
         return jsonify({'status': 'error', 'message': 'Failed to insert deal'})
 
-def cefi_deal(data):
-    print("CEFI DEAL")
-    print(data)
+def get_token_ID(token):
+    pw = input("Password: ")
+    db = Database(
+        user='root',
+        password=pw,
+        host='localhost',
+        database='defi_trading'
+    )
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
 
+    result = db.get_token_id_by_name(token)
+    db.close()
+
+    return result
+
+def cefi_deal(data):
     # get token id from token name
-    # some_method()
-    token_id = 1
+    token_id = get_token_ID(data['tokenID'])[0]
+
+    if not token_id:
+        logging.error(f"TokenID: {data['tokenID']} not found in Database")
+    print("TOKEN_ID===========")
+    print(token_id)
 
     status = new_deal_to_database(data['strategy'], data['dealID'], token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
     print(status)

@@ -151,7 +151,6 @@ class Database:
         return result
     
 
-
     def insert_deal(self, strategy, order_id, token_id, timestamp, order_type, order_price, order_size):
         cursor = self.connection.cursor()
         query = "INSERT INTO Orders (Strategy, OrderID, TokenID, Timestamp, OrderType, OrderPrice, OrderSize) VALUES (%s, %s, %s, %s, %s, %s, %s)"
@@ -162,6 +161,17 @@ class Database:
         self.connection.commit()
         cursor.close()
 
+    def get_token_id_by_name(self, token_name):
+        cursor = self.connection.cursor()
+        query = "SELECT TokenID FROM Tokens WHERE TokenName = %s"
+        values = (token_name,)
+        cursor.execute(query, values)
+        result = cursor.fetchone()
+        cursor.close()
+        if result:
+            return result
+        else:
+            return None
 
 
 
