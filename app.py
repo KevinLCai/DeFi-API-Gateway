@@ -5,11 +5,24 @@ import csv
 from database import Database
 import logging
 import datetime
+from dotenv import load_dotenv
+import os
 
+load_dotenv(dotenv_path="env/.env")
+
+PASSWORD = os.getenv('PASSWORD')
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
+def create_db_instance():
+    db = Database(
+        user='root',
+        password=PASSWORD,
+        host='localhost',
+        database='defi_trading'
+    )
+    return db
 
 @app.route('/')
 def hello_world():
@@ -43,13 +56,7 @@ def add_token():
     token_name = data.get('token_name')
     token_type = data.get('token_type')
 
-    pw = input("Password: ")
-    db = Database(
-        user='root',
-        password=pw,
-        host='localhost',
-        database='defi_trading'
-    )
+    db = create_db_instance()
     is_invalid = db.is_not_valid()
     if is_invalid:
         return jsonify(is_invalid)
@@ -67,14 +74,9 @@ def add_token():
 def get_token():
     token_id = request.args.get('token_id')
 
-    pw = input("Password: ")
+    # pw = input("Password: ")
 
-    db = Database(
-        user='root',
-        password=pw,
-        host='localhost',
-        database='defi_trading'
-    )
+    db = create_db_instance()
     is_invalid = db.is_not_valid()
     if is_invalid:
         return jsonify(is_invalid)
@@ -99,13 +101,7 @@ def cefi_historical():
 
 def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, order_price, order_size):
  
-    pw = input("Password: ")
-    db = Database(
-        user='root',
-        password=pw,
-        host='localhost',
-        database='defi_trading'
-    )
+    db = create_db_instance()
     is_invalid = db.is_not_valid()
     if is_invalid:
         return jsonify(is_invalid)
@@ -119,13 +115,7 @@ def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, or
         return jsonify({'status': 'error', 'message': 'Failed to insert deal'})
 
 def get_token_ID(token):
-    pw = input("Password: ")
-    db = Database(
-        user='root',
-        password=pw,
-        host='localhost',
-        database='defi_trading'
-    )
+    db = create_db_instance()
     is_invalid = db.is_not_valid()
     if is_invalid:
         return jsonify(is_invalid)
@@ -135,16 +125,28 @@ def get_token_ID(token):
 
     return result
 
+def new_deal_ID():
+    db = create_db_instance()
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
+
+    result = db.get_new_deal_id()
+    db.close()
+    return result
+
 def cefi_deal(data):
     # get token id from token name
     token_id = get_token_ID(data['tokenID'])[0]
+    # create new dealID
+    deal_id = new_deal_ID()
+    if not deal_id:
+        deal_id = 1
 
     if not token_id:
         logging.error(f"TokenID: {data['tokenID']} not found in Database")
-    print("TOKEN_ID===========")
-    print(token_id)
 
-    status = new_deal_to_database(data['strategy'], data['dealID'], token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
+    status = new_deal_to_database(data['strategy'], deal_id, token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
     print(status)
 
 @app.route("/deal", methods=["POST"])

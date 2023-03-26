@@ -173,6 +173,13 @@ class Database:
         else:
             return None
 
+    def get_new_deal_id(self):
+        cursor = self.connection.cursor()
+        query = "SELECT MAX(OrderID) FROM Orders"
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+        cursor.close()
+        return result + 1
 
 
     def close(self):
