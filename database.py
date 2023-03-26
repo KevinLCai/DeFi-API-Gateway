@@ -149,6 +149,21 @@ class Database:
         result = cursor.fetchone()
         cursor.close()
         return result
+    
+
+
+    def insert_deal(self, strategy, order_id, token_id, timestamp, order_type, order_price, order_size):
+        cursor = self.connection.cursor()
+        query = "INSERT INTO Orders (Strategy, OrderID, TokenID, Timestamp, OrderType, OrderPrice, OrderSize) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        values = (strategy, order_id, token_id, timestamp, order_type, order_price, order_size)
+        print("VALUES==============")
+        print(values)
+        cursor.execute(query, values)
+        self.connection.commit()
+        cursor.close()
+
+
+
 
     def close(self):
         self.connection.close()

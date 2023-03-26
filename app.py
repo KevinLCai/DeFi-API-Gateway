@@ -4,6 +4,7 @@ import pandas as pd
 import csv
 from database import Database
 import logging
+import datetime
 
 
 app = Flask(__name__)
@@ -96,14 +97,43 @@ def cefi_historical():
     # Code to parse and save the data
     return "Data received and processed"
 
-def cefi_deal():
+def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, order_price, order_size):
+ 
+    pw = input("Password: ")
+    db = Database(
+        user='root',
+        password=pw,
+        host='localhost',
+        database='defi_trading'
+    )
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
+
+    result = db.insert_deal(strategy, order_id, token_id, timestamp, order_type, order_price, order_size)
+    db.close()
+
+    if result:
+        return jsonify({'status': 'success', 'message': 'Deal inserted successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Failed to insert deal'})
+
+def cefi_deal(data):
     print("CEFI DEAL")
+    print(data)
+
+    # get token id from token name
+    # some_method()
+    token_id = 1
+
+    status = new_deal_to_database(data['strategy'], data['dealID'], token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
+    print(status)
 
 @app.route("/deal", methods=["POST"])
 def deal():
     data = request.get_json()
     if data["strategy"] == "CeFi":
-        cefi_deal()
+        cefi_deal(data)
     # Code to parse and save the data
     return "Data received and processed"
 
