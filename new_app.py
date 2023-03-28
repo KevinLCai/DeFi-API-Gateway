@@ -7,6 +7,7 @@ import logging
 import datetime
 from dotenv import load_dotenv
 import os
+from flask_socketio import SocketIO, emit
 
 load_dotenv(dotenv_path="env/.env")
 
@@ -14,6 +15,7 @@ PASSWORD = os.getenv('PASSWORD')
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 def create_db_instance():
     db = Database(
@@ -137,7 +139,10 @@ def new_deal_ID():
 
 def cefi_deal(data):
     # get token id from token name
-    token_id = get_token_ID(data['tokenID'])[0]
+    try:
+        token_id = get_token_ID(data['tokenID'])[0]
+    except TypeError:
+        token_id = 0
     # create new dealID
     deal_id = new_deal_ID()
     if not deal_id:
@@ -149,13 +154,30 @@ def cefi_deal(data):
     status = new_deal_to_database(data['strategy'], deal_id, token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
     print(status)
 
+def send_data(data):
+    socketio.emit('data_from_backend', {'data': data}, include_self=True)
+
 @app.route("/deal", methods=["POST"])
 def deal():
+    print("DEAL============")
     data = request.get_json()
     if data["strategy"] == "CeFi":
         cefi_deal(data)
     # Code to parse and save the data
+
+    data.pop('fees', None)
+    send_data(data)
+
     return "Data received and processed"
 
+@socketio.on('connect')
+def test_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client disconnected')
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True) 
+    socketio.run(app)

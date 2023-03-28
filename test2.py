@@ -25,7 +25,7 @@ def deal():
     data = request.get_json()
     print("DATA=======")
     print(data)
-    # data = {'message': 'Hello from the backend!'}
+
     data.pop('fees', None)
     send_data(data)
 

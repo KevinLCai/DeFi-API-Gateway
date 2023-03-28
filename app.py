@@ -137,7 +137,10 @@ def new_deal_ID():
 
 def cefi_deal(data):
     # get token id from token name
-    token_id = get_token_ID(data['tokenID'])[0]
+    try:
+        token_id = get_token_ID(data['tokenID'])[0]
+    except TypeError:
+        token_id = 0
     # create new dealID
     deal_id = new_deal_ID()
     if not deal_id:
@@ -151,6 +154,7 @@ def cefi_deal(data):
 
 @app.route("/deal", methods=["POST"])
 def deal():
+    print("DEAL============")
     data = request.get_json()
     if data["strategy"] == "CeFi":
         cefi_deal(data)
