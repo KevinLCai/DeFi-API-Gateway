@@ -179,6 +179,8 @@ class Database:
         cursor.execute(query)
         result = cursor.fetchone()[0]
         cursor.close()
+        if not result:
+            result = 1
         return result + 1
 
 
