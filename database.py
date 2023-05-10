@@ -164,6 +164,15 @@ class Database:
             return True
         except:
             return False
+        
+    def get_recent_orders(self):
+        cursor = self.connection.cursor()
+        query = "SELECT * FROM Orders ORDER BY Timestamp DESC LIMIT 10"
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
 
     def get_token_id_by_name(self, token_name):
         cursor = self.connection.cursor()

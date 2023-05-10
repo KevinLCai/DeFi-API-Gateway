@@ -51,14 +51,42 @@ def chart():
     data = format_data('daily_BTC.csv')
     return jsonify(data)
 
+def convert_data(data):
+    asset = 'BTC'
+    timestamp = datetime.datetime.strftime(data[3], '%Y-%m-%dT%H:%M:%S.%f')[:-3]
+    price = float(data[1])
+    size = float(data[6])
+    direction = data[4]
+
+    return {
+        "asset": asset,
+        "timestamp": timestamp,
+        "price": price,
+        "size": size,
+        "direction": direction
+    }
+
+
 @app.route('/new_deal', methods=['POST'])
 def new_deal():
-    trade_data = {
-                    "timestamp": "2023-05-10T12:34:56.789012",
-                    "price": 45000.0,
-                    "size": 0.5,
-                    "direction": "buy"
-                }
+    db = create_db_instance()
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
+
+    recent_orders = db.get_recent_orders()
+    db.close()
+
+    # trade_data = {
+    #                 "asset": "BTC",
+    #                 "timestamp": "2023-05-10T12:34:56.789012",
+    #                 "price": 45000.0,
+    #                 "size": 0.5,
+    #                 "direction": "buy"
+    #             }
+    trade_data = convert_data(recent_orders[0])
+    print("RECENT ORDERS+=====")
+    print(recent_orders)
     return jsonify(trade_data)
 
 @app.route('/add_token', methods=['POST'])
