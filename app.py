@@ -7,12 +7,16 @@ import logging
 import datetime
 from dotenv import load_dotenv
 import os
+from flask_socketio import SocketIO
+
 
 load_dotenv(dotenv_path="env/.env")
 
 PASSWORD = os.getenv('PASSWORD')
 
 app = Flask(__name__)
+# socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 cors = CORS(app, resources={r"/*": {"origins": ["*"]}})
 # app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['CORS_HEADERS'] = 'Access-Control-Allow-Origin'
@@ -67,8 +71,8 @@ def convert_data(data):
     }
 
 
-@app.route('/new_deal', methods=['POST'])
-def new_deal():
+@app.route('/get_new_deals', methods=['POST'])
+def get_new_deals():
     db = create_db_instance()
     is_invalid = db.is_not_valid()
     if is_invalid:
@@ -77,16 +81,7 @@ def new_deal():
     recent_orders = db.get_recent_orders()
     db.close()
 
-    # trade_data = {
-    #                 "asset": "BTC",
-    #                 "timestamp": "2023-05-10T12:34:56.789012",
-    #                 "price": 45000.0,
-    #                 "size": 0.5,
-    #                 "direction": "buy"
-    #             }
-    trade_data = convert_data(recent_orders[0])
-    print("RECENT ORDERS+=====")
-    print(recent_orders)
+    trade_data = list(map(convert_data, recent_orders))
     return jsonify(trade_data)
 
 @app.route('/add_token', methods=['POST'])
@@ -187,6 +182,10 @@ def new_deal_ID():
     db.close()
     return result
 
+def emit_new_deal():
+    trade_data = {'asset': 'BTC/USD', 'timestamp': '2022-01-01 10:00:00', 'price': 50000, 'size': 1, 'direction': 'buy'}
+    socketio.emit('new_trade', trade_data)
+
 def cefi_deal(data):
     # get token id from token name
     try:
@@ -208,6 +207,7 @@ def deal():
     data = request.get_json()
     if data["strategy"] == "CeFi":
         cefi_deal(data)
+        emit_new_deal()
     # Code to parse and save the data
     return "Data received and processed"
 
