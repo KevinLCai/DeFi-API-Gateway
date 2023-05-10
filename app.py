@@ -7,13 +7,18 @@ import logging
 import datetime
 from dotenv import load_dotenv
 import os
+from flask_socketio import SocketIO, emit
 
 load_dotenv(dotenv_path="env/.env")
 
 PASSWORD = os.getenv('PASSWORD')
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+cors = CORS(app, resources={r"/*": {"origins": ["*"]}})
+# app.config['CORS_HEADERS'] = 'Content-Type'
+app.config['CORS_HEADERS'] = 'Access-Control-Allow-Origin'
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
+
 
 def create_db_instance():
     db = Database(
@@ -100,7 +105,7 @@ def cefi_historical():
     return "Data received and processed"
 
 def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, order_price, order_size):
- 
+
     db = create_db_instance()
     is_invalid = db.is_not_valid()
     if is_invalid:
@@ -110,8 +115,20 @@ def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, or
     db.close()
 
     if result:
+        print("Successfully saved deal to database!")
+        # send deal to frontend
+        message = {
+            "timestamp": timestamp,
+            "price": order_price,
+            "size": order_size,
+            "direction": order_type
+            }
+        socketio.emit('cefi_deal', message)
+        print(f"Sent message: {message}")
+
         return jsonify({'status': 'success', 'message': 'Deal inserted successfully'})
     else:
+        print("ERROR: Failed to store deal in database.")
         return jsonify({'status': 'error', 'message': 'Failed to insert deal'})
 
 def get_token_ID(token):
@@ -140,11 +157,9 @@ def cefi_deal(data):
     try:
         token_id = get_token_ID(data['tokenID'])[0]
     except TypeError:
-        token_id = 0
+        token_id = None
     # create new dealID
     deal_id = new_deal_ID()
-    if not deal_id:
-        deal_id = 1
 
     if not token_id:
         logging.error(f"TokenID: {data['tokenID']} not found in Database")
@@ -154,7 +169,7 @@ def cefi_deal(data):
 
 @app.route("/deal", methods=["POST"])
 def deal():
-    print("DEAL============")
+    print("New Trade")
     data = request.get_json()
     if data["strategy"] == "CeFi":
         cefi_deal(data)

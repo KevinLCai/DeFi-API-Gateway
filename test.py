@@ -1,35 +1,16 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+import asyncio
+import websockets
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins='*')
-CORS(app)
+async def echo(websocket, path):
+    async for message in websocket:
+        print(f"Received message: {message}")
+        response = f"Server received: {message}"
+        await websocket.send(response)
+        print(f"Sent response: {response}")
 
-@socketio.on('connect')
-def test_connect():
-    print('Client connected')
+async def main():
+    async with websockets.serve(echo, "localhost", 3000):
+        print("WebSocket server started")
+        await asyncio.Future()  # run forever
 
-
-@socketio.on('disconnect')
-def test_disconnect():
-    print('Client disconnected')
-    
-def send_data(data):
-    socketio.emit('data_from_backend', {'data': data}, include_self=True)
-
-@app.route("/deal", methods=["POST"])
-def deal():
-    print("DEAL")
-    data = request.get_json()
-    print("DATA=======")
-    print(data)
-    # data = {'message': 'Hello from the backend!'}
-    data.pop('fees', None)
-    send_data(data)
-
-    return jsonify({'success': True})
-
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=3000)
+asyncio.run(main())
