@@ -7,7 +7,6 @@ import logging
 import datetime
 from dotenv import load_dotenv
 import os
-from flask_socketio import SocketIO, emit
 
 load_dotenv(dotenv_path="env/.env")
 
@@ -17,7 +16,6 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": ["*"]}})
 # app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['CORS_HEADERS'] = 'Access-Control-Allow-Origin'
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
 
 def create_db_instance():
@@ -53,6 +51,15 @@ def chart():
     data = format_data('daily_BTC.csv')
     return jsonify(data)
 
+@app.route('/new_deal', methods=['POST'])
+def new_deal():
+    trade_data = {
+                    "timestamp": "2023-05-10T12:34:56.789012",
+                    "price": 45000.0,
+                    "size": 0.5,
+                    "direction": "buy"
+                }
+    return jsonify(trade_data)
 
 @app.route('/add_token', methods=['POST'])
 def add_token():
@@ -117,14 +124,14 @@ def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, or
     if result:
         print("Successfully saved deal to database!")
         # send deal to frontend
-        message = {
-            "timestamp": timestamp,
-            "price": order_price,
-            "size": order_size,
-            "direction": order_type
-            }
-        socketio.emit('cefi_deal', message)
-        print(f"Sent message: {message}")
+        # message = {
+        #     "timestamp": timestamp,
+        #     "price": order_price,
+        #     "size": order_size,
+        #     "direction": order_type
+        #     }
+        # socketio.emit('cefi_deal', message)
+        # print(f"Sent message: {message}")
 
         return jsonify({'status': 'success', 'message': 'Deal inserted successfully'})
     else:
@@ -166,7 +173,7 @@ def cefi_deal(data):
 
     status = new_deal_to_database(data['strategy'], deal_id, token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
     print(status)
-
+ 
 @app.route("/deal", methods=["POST"])
 def deal():
     print("New Trade")
