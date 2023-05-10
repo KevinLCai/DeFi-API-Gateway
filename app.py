@@ -7,17 +7,19 @@ import logging
 import datetime
 from dotenv import load_dotenv
 import os
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
+
 
 load_dotenv(dotenv_path="env/.env")
 
 PASSWORD = os.getenv('PASSWORD')
 
 app = Flask(__name__)
+# socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 cors = CORS(app, resources={r"/*": {"origins": ["*"]}})
 # app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['CORS_HEADERS'] = 'Access-Control-Allow-Origin'
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
 
 def create_db_instance():
@@ -53,6 +55,34 @@ def chart():
     data = format_data('daily_BTC.csv')
     return jsonify(data)
 
+def convert_data(data):
+    asset = 'BTC'
+    timestamp = datetime.datetime.strftime(data[3], '%Y-%m-%dT%H:%M:%S.%f')[:-3]
+    price = float(data[1])
+    size = float(data[6])
+    direction = data[4]
+
+    return {
+        "asset": asset,
+        "timestamp": timestamp,
+        "price": price,
+        "size": size,
+        "direction": direction
+    }
+
+
+@app.route('/get_new_deals', methods=['POST'])
+def get_new_deals():
+    db = create_db_instance()
+    is_invalid = db.is_not_valid()
+    if is_invalid:
+        return jsonify(is_invalid)
+
+    recent_orders = db.get_recent_orders()
+    db.close()
+
+    trade_data = list(map(convert_data, recent_orders))
+    return jsonify(trade_data)
 
 @app.route('/add_token', methods=['POST'])
 def add_token():
@@ -117,14 +147,14 @@ def new_deal_to_database(strategy, order_id, token_id, timestamp, order_type, or
     if result:
         print("Successfully saved deal to database!")
         # send deal to frontend
-        message = {
-            "timestamp": timestamp,
-            "price": order_price,
-            "size": order_size,
-            "direction": order_type
-            }
-        socketio.emit('cefi_deal', message)
-        print(f"Sent message: {message}")
+        # message = {
+        #     "timestamp": timestamp,
+        #     "price": order_price,
+        #     "size": order_size,
+        #     "direction": order_type
+        #     }
+        # socketio.emit('cefi_deal', message)
+        # print(f"Sent message: {message}")
 
         return jsonify({'status': 'success', 'message': 'Deal inserted successfully'})
     else:
@@ -152,6 +182,10 @@ def new_deal_ID():
     db.close()
     return result
 
+def emit_new_deal():
+    trade_data = {'asset': 'BTC/USD', 'timestamp': '2022-01-01 10:00:00', 'price': 50000, 'size': 1, 'direction': 'buy'}
+    socketio.emit('new_trade', trade_data)
+
 def cefi_deal(data):
     # get token id from token name
     try:
@@ -166,13 +200,14 @@ def cefi_deal(data):
 
     status = new_deal_to_database(data['strategy'], deal_id, token_id, datetime.datetime.fromtimestamp(data['timestamp']), data['orderType'], data['price'], data['size'])
     print(status)
-
+ 
 @app.route("/deal", methods=["POST"])
 def deal():
     print("New Trade")
     data = request.get_json()
     if data["strategy"] == "CeFi":
         cefi_deal(data)
+        emit_new_deal()
     # Code to parse and save the data
     return "Data received and processed"
 
